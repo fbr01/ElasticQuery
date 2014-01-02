@@ -4,29 +4,49 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
 <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
 <style>
 body{font-family:arial;font-size: 9pt;}
-#metadata {width:9em;height:30em;padding:0px;}
-#toolbar  {position: absolute;top: 1em;left: 13em;width:55em;height:4em; }
-#result   {position: absolute;top: 6em;left: 12em;width:60em;height:42em;}
-#tabs-1{height:35em;overflow:auto;}
-#db_fields, #view_fields { 
-padding: 8 4 2em;
-background-color: rgb(245, 245, 245);
-border: 1px solid rgb(227, 227, 227);
-border-radius: 4px;
-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.05) inset;
-list-style-type: none;
+#metadata {width:12em;min-height:32em;padding:0px;}
+#view   {position: absolute;top: 1em;left: 13em;width:55em;height:4em; }
+#search {position: absolute;top: 6em;left: 13em;width:55em;height:4em; padding: 1em 1em 1em;}
+
+
+#search input {
+	padding-left: 30px;
+	width: 20em;
+}
+#search span {
+    position: absolute;
+    padding: 20px 12px;
+    pointer-events: none;
 }
 
-#db_fields {height:30em;width : 11em;}
-#view_fields {width : 46em;}
-#db_fields li, #view_fields li { margin: 0 5px 5px 5px; padding: 5px; font-size: 0.9em; width: 110px; }
+
+#result {position: absolute;top: 10em;left: 12em;width:60em;height:42em;}
+#tabs-1 {height:35em;overflow:auto;}
+
+#es_fields {
+list-style-type: none;
+margin-top: 6em;
+padding: 0em;
+margin-left:0em;
+}
+
+#view_fields { 
+padding: 1em 1em 1em;
+list-style-type: none;
+height:4em;
+}
+
+#es_fields {height:30em;width : 12em;position: absolute;top: 5em;}
+#view_fields {width : 55em;}
+#es_fields li, #view_fields li { margin: 0 0px 5px 0px; padding: 5px; font-size: 0.9em; width: 110px; border-radius: 6px; }
 #view_fields li { display:inline;}
 
 #worksheet {
 font-family:arial;
-background-color: #CDCDCD;
+background-color: #DDDDDD;
 margin:10px 1pt 15px;
 font-size: 9pt;
 text-align: left;
@@ -35,59 +55,33 @@ overflow:auto;
 }
 
 #worksheet th, #worksheet th {
-background-color: #CDCDCD;
+background-color: #DDDDDD;
 font-size: 10pt;
 padding: 4px;
 text-align:center;
 }
 
 #worksheet tr:nth-child(even) {
-background-color: #EEEEEE;
+background-color: #EFEFEF;
 }
 
 #worksheet tr:nth-child(odd) {
 background-color: #FFFFFF;
 }
 
-select, input, textarea {
-display: block;
-padding: 6px 12px;
-line-height: 1.42857;
-color: rgb(85, 85, 85);
-vertical-align: middle;
-background-color: rgb(255, 255, 255);
-background-image: none;
-border: 1px solid rgb(204, 204, 204);
-border-radius: 4px;
-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.075) inset;
-transition: border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;
-}
-
 #es_indexs{
-position: absolute;top: 1em;
-width: 12em;
-height: 34px;
-}
-
-#db_fields{
-position: absolute;top: 5em;
-}
-
-#csv{
-width:45em;
-height: 330px;
+position: absolute;top: 3.5em;
 }
 
 #csvbutton{
 position: absolute;
 left: 50em;
-top : 2em;
-color: rgb(255, 255, 255);
-background-color: rgb(71, 164, 71);
-border-color: rgb(57, 132, 57);
-border-radius: 4px;
-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.075) inset;
-transition: border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;
+top : 0.25em;
+}
+
+#csv{
+width:45em;
+height: 330px;
 }
 </style>
 <script>
@@ -146,7 +140,7 @@ if (selected_es_index != undefined){
 						$.each(this, function(rootTag) { //rootTag
 							if(available_es_fields[rootTag] == undefined){
 								available_es_fields[rootTag] = 'ok';
-								$("#db_fields").append($('<li class="ui-state-default">').text(rootTag).attr('value', rootTag));
+								$("#es_fields").append($('<li class="ui-state-default">').text(rootTag).attr('value', rootTag));
 							}
 						});
 					});
@@ -163,7 +157,7 @@ $(document).ready(function() {
 	$("#result").tabs();
 
 	//Metadatas - Interaction beetwen available db fields and view fields
-	$( "#db_fields, #view_fields" ).sortable({
+	$( "#es_fields, #view_fields" ).sortable({
 		connectWith: ".connectedSortable",
 		stop:function(event,ui){
 			refresh_query();
@@ -232,50 +226,60 @@ function refresh_query(){
 
 </head>
 <body>
-<div id="metadata">
-
-<form id="es_indexs" method="GET" ACTION="" onChange="submit()">
-ElasticSearch indexs : <select name="es_index" id="es_index">
-<option>---</option>
-</select>
-
-</form>
-
-<ul id="db_fields" class="connectedSortable"></ul>
-
+<div id="metadata" class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Metadata</h3>
+  </div>
+  <div class="panel-body">
+	<form id="es_indexs" method="GET" ACTION="" onChange="submit()">
+	ElasticSearch indexs : 
+	<select name="es_index" id="es_index" class="form-control input-sm">
+	<option>---</option>
+	</select>
+	</form>
+	<ul id="es_fields" class="connectedSortable"></ul>
+  </div>
 </div>
 
-<div id="toolbar">
-<ul id="view_fields" class="connectedSortable">
-</ul>
-<button id="csvbutton" name="CSV" value="CSV" onclick="window.open('data:text/csv,' + $('#csv').val());">CSV</button>
+<div id="view" class="panel panel-default">
+	<ul id="view_fields" class="connectedSortable"></ul>
+	<button id="csvbutton" name="CSV" value="CSV" onclick="window.open('data:text/csv,' + $('#csv').val());" class="btn btn-success">CSV</button>
+</div>
+
+<div id="search" class="panel panel-default">
+<div class="form-inline" role="form">
+<span class="glyphicon glyphicon-search"></span>
+<input id="search_term1" name="search_term1" type="text" class="form-control input-sm" />
+<select name="search_operator2" id="search_operator2" class="form-control input-sm">
+	<option value="AND">AND</option>
+	<option value="OR">OR</option>
+</select>
+<span class="glyphicon glyphicon-search" class="form-control input-sm"></span>
+<input id="search_term2" name="search_term2" type="text" class="form-control input-sm" />
+</div>
 </div>
 
 
 <div id="result">
  <ul>
-<li><a href="#tabs-1">Table</a></li>
-<li><a href="#tabs-2">CSV Export</a></li>
-<li><a href="#tabs-3">Graphs</a></li>
+	<li><a href="#tabs-1">Table</a></li>
+	<li><a href="#tabs-2">CSV Export</a></li>
+	<li><a href="#tabs-3">Graphs</a></li>
+	<li><a href="#tabs-4">Info</a></li>
 </ul>
 <div id="tabs-1">
-<table id="worksheet"></table>
-
-
-
+	<table id="worksheet" class="table table-bordered"></table>
 </div>
 <div id="tabs-2">
-CSV export :
-<textarea id="csv"></textarea>
+	CSV export :
+	<textarea id="csv"></textarea>
 </div>
 <div id="tabs-3">
-
-
-
-
+Graphs
+</div>
+<div id="tabs-4">
+Info
 </div>
 </div>
-
-
 </body>
 </html>
