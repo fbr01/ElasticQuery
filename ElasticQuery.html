@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
 <title>ElasticQuery</title>
@@ -7,11 +8,25 @@
 <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
 <style>
 body{font-family:arial;font-size: 9pt;}
-#header{display:inline;}
+#header{display:inline;height:3em;}
 #header input{
 	padding-left: 30px;
 	width: 20em;
 }
+#header table,#header table tr td{padding:0em;margin:0em;max-height:3em;vertical-align:top;}
+
+#header .navbar-brand {
+    padding-top: 0.2em;
+}
+
+#header label {
+    padding-top: 0.2em;
+    font-size: 0.8em;
+    font-weight:normal;
+    margin-left:3em;
+}
+
+
 #header i {
     position: absolute;
     margin-left : 8px;
@@ -19,9 +34,9 @@ body{font-family:arial;font-size: 9pt;}
     pointer-events: none;
 }
 
-#metadata {position: absolute;top: 5em;width:12em;min-height:28em;padding:0px;}
-#view   {position: absolute;top: 5em;left: 13em;width:55em;height:4em; }
-#search {position: absolute;top: 10em;left: 13em;width:55em;height:4em; padding: 1em 1em 1em;}
+#metadata {position: absolute;top: 4em;width:12em;min-height:28em;padding:0px;}
+#view   {position: absolute;top: 4em;left: 13em;width:55em;height:4em; }
+#search {position: absolute;top: 9em;left: 13em;width:55em;height:4em; padding: 1em 1em 1em;}
 #search input {
 	padding-left: 30px;
 	width: 20em;
@@ -33,7 +48,7 @@ body{font-family:arial;font-size: 9pt;}
 }
 
 
-#result {position: absolute;top: 13em;left: 12em;width:60em;height:35em;}
+#result {position: absolute;top: 12em;left: 12em;width:60em;height:35em;}
 #tabs-1 {height:30em;overflow:auto;}
 
 #es_fields {
@@ -125,6 +140,7 @@ var data = [];
 var selected_es_index = $.urlParam('es_index');
 var available_es_fields = [];
 var selected_es_fields = [];
+var es_limit;
 
 //Populate indexs/DB selection
 $.ajax({
@@ -196,6 +212,8 @@ function refresh_query(){
 	$('#worksheet').empty();
 	$('#csv').empty();
 
+	es_limit = $('#es_limit').val();
+
 	//Execute query & populate
 	$.ajax({
 		    url: elasticsearch_url+'/'+selected_es_index+'/_search',
@@ -205,7 +223,7 @@ function refresh_query(){
 		        query:{"match_all": {}},
 		        pretty: true,
 			from : 0,
-			size : 10000000,//
+			size : es_limit,
 		    },
 		    success: function(response) {
 		        var data_response = response.hits.hits;
@@ -248,26 +266,35 @@ function refresh_query(){
 
 </head>
 <body>
-<nav id="header" class="navbar navbar-default navbar-fixed-top" role="navigation">
+<nav id="header" class="navbar-inner-sm navbar-default navbar-fixed-top" role="navigation">
   <div class="navbar-header">
     <a class="navbar-brand" href="#">ElasticQuery</a>
   </div>
 
 <div class="form-inline" role="form">
 <table><tr><td>
-    <form class="form-inline" role="form" id="es_servers" method="GET" ACTION=""">
+    <form class="form-inline" role="form" id="es_servers" method="GET" ACTION="">
 	<i class="glyphicon glyphicon-tasks"></i>
         <input id="es_server" name="es_server" type="text" class="form-control input-sm" placeholder="Server">
       	<button type="submit" class="btn btn-default input-sm" onclick="submit()">Connect</button>
     </form>
 </td><td>
     <form id="es_indexs" method="GET" ACTION="" onChange="submit()" class="form-inline">
-	ElasticSearch indexs : 
+	<label for="es_index">Index :</label>
 	<select name="es_index" id="es_index" class="form-control input-sm">
 	<option>---</option>
 	</select>
 	<input type="hidden" id="es_server_index" name="es_server_index">
     </form>
+</td><td>
+	<label for="es_limit">Query limit :</label>
+	<select name="es_limit" id="es_limit" class="form-control input-sm" style="margin-top:0em;">
+	<option>10</option>
+	<option>100</option>
+	<option>1000</option>
+	<option>100000</option>
+	<option>1000000</option>
+	</select>
 </td></tr></table>
 </div>
 </nav>
