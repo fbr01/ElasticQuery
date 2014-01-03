@@ -215,7 +215,12 @@ function refresh_query(){
 
 	es_limit = $('#es_limit').val();
 	if ($('#search_term1').val() != ''){
-		es_query =   $('#search_term1').val();
+		if ($('#search_term2').val() != ''){
+			es_query =   $('#search_term1').val() + ' '+ $('#search_operator2').val() +' '+ $('#search_term2').val();
+		}
+		else{
+			es_query =   $('#search_term1').val();
+		}
 	}
 	else{
 		es_query =  {"match_all" : { } } ; 
@@ -324,12 +329,12 @@ function refresh_query(){
 <div class="form-inline" role="form">
 <i class="glyphicon glyphicon-search"></i>
 <input id="search_term1" name="search_term1" type="text" class="form-control input-sm" onchange="refresh_query();" />
-<select name="search_operator2" id="search_operator2" class="form-control input-sm">
+<select name="search_operator2" id="search_operator2" class="form-control input-sm" onchange="refresh_query();">
 	<option value="AND">AND</option>
 	<option value="OR">OR</option>
 </select>
 <i class="glyphicon glyphicon-search"></i>
-<input id="search_term2" name="search_term2" type="text" class="form-control input-sm" />
+<input id="search_term2" name="search_term2" type="text" class="form-control input-sm" onchange="refresh_query();"/>
 </div>
 </div>
 
