@@ -141,6 +141,7 @@ var selected_es_index = $.urlParam('es_index');
 var available_es_fields = [];
 var selected_es_fields = [];
 var es_limit;
+var es_query;
 
 //Populate indexs/DB selection
 $.ajax({
@@ -213,6 +214,12 @@ function refresh_query(){
 	$('#csv').empty();
 
 	es_limit = $('#es_limit').val();
+	if ($('#search_term1').val() != ''){
+		es_query =   $('#search_term1').val();
+	}
+	else{
+		es_query =  {"match_all" : { } } ; 
+	}
 
 	//Execute query & populate
 	$.ajax({
@@ -220,7 +227,7 @@ function refresh_query(){
 		    type: 'GET',
 		    dataType: 'json',
 		    data: {
-		        query:{"match_all": {}},
+		        q: es_query,
 		        pretty: true,
 			from : 0,
 			size : es_limit,
@@ -316,7 +323,7 @@ function refresh_query(){
 <div id="search" class="panel panel-default">
 <div class="form-inline" role="form">
 <i class="glyphicon glyphicon-search"></i>
-<input id="search_term1" name="search_term1" type="text" class="form-control input-sm" />
+<input id="search_term1" name="search_term1" type="text" class="form-control input-sm" onchange="refresh_query();" />
 <select name="search_operator2" id="search_operator2" class="form-control input-sm">
 	<option value="AND">AND</option>
 	<option value="OR">OR</option>
