@@ -7,28 +7,37 @@
 <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
 <style>
 body{font-family:arial;font-size: 9pt;}
-#metadata {width:12em;min-height:32em;padding:0px;}
-#view   {position: absolute;top: 1em;left: 13em;width:55em;height:4em; }
-#search {position: absolute;top: 6em;left: 13em;width:55em;height:4em; padding: 1em 1em 1em;}
+#header{display:inline;}
+#header input{
+	padding-left: 30px;
+	width: 20em;
+}
+#header i {
+    position: absolute;
+    margin-left : 8px;
+    margin-top : 8px;
+    pointer-events: none;
+}
 
-
+#metadata {position: absolute;top: 5em;width:12em;min-height:28em;padding:0px;}
+#view   {position: absolute;top: 5em;left: 13em;width:55em;height:4em; }
+#search {position: absolute;top: 10em;left: 13em;width:55em;height:4em; padding: 1em 1em 1em;}
 #search input {
 	padding-left: 30px;
 	width: 20em;
 }
-#search span {
+#search i {
     position: absolute;
     padding: 20px 12px;
     pointer-events: none;
 }
 
 
-#result {position: absolute;top: 10em;left: 12em;width:60em;height:42em;}
-#tabs-1 {height:35em;overflow:auto;}
+#result {position: absolute;top: 13em;left: 12em;width:60em;height:35em;}
+#tabs-1 {height:30em;overflow:auto;}
 
 #es_fields {
 list-style-type: none;
-margin-top: 6em;
 padding: 0em;
 margin-left:0em;
 }
@@ -69,9 +78,7 @@ background-color: #EFEFEF;
 background-color: #FFFFFF;
 }
 
-#es_indexs{
-position: absolute;top: 3.5em;
-}
+
 
 #csvbutton{
 position: absolute;
@@ -92,7 +99,7 @@ $.urlParam = function(name){
        return null;
     }
     else{
-       return results[1] || 0;
+       return decodeURIComponent(results[1]) || 0;
     }
 }
 
@@ -100,12 +107,19 @@ $.urlParam = function(name){
 /*
 * Configuration *****
 */
-var elasticsearch_url = 'http://'+window.location.hostname+':9200';
+var default_server = 'http://'+window.location.hostname+':9200';
 var date_format = 'dd/mm/yy';
 /*
 * *******************
 */
 
+var elasticsearch_url = $.urlParam('es_server');
+if (elasticsearch_url == undefined){
+	elasticsearch_url = $.urlParam('es_server_index');
+}
+if (elasticsearch_url == undefined){
+	elasticsearch_url = default_server;
+}
 
 var data = [];
 var selected_es_index = $.urlParam('es_index');
@@ -156,6 +170,9 @@ $(document).ready(function() {
 	//UI tabs
 	$("#result").tabs();
 
+	$("#es_server").val(elasticsearch_url);
+	$("#es_server_index").val(elasticsearch_url);
+
 	//Metadatas - Interaction beetwen available db fields and view fields
 	$( "#es_fields, #view_fields" ).sortable({
 		connectWith: ".connectedSortable",
@@ -164,6 +181,11 @@ $(document).ready(function() {
 		}
 	}).disableSelection();
 });
+
+//Connect to a server
+function connect_server(){
+	elasticsearch_url = $('#es_server').text();
+}
 
 //Refresh DB Query
 function refresh_query(){
@@ -226,17 +248,35 @@ function refresh_query(){
 
 </head>
 <body>
+<nav id="header" class="navbar navbar-default navbar-fixed-top" role="navigation">
+  <div class="navbar-header">
+    <a class="navbar-brand" href="#">ElasticQuery</a>
+  </div>
+
+<div class="form-inline" role="form">
+<table><tr><td>
+    <form class="form-inline" role="form" id="es_servers" method="GET" ACTION=""">
+	<i class="glyphicon glyphicon-tasks"></i>
+        <input id="es_server" name="es_server" type="text" class="form-control input-sm" placeholder="Server">
+      	<button type="submit" class="btn btn-default input-sm" onclick="submit()">Connect</button>
+    </form>
+</td><td>
+    <form id="es_indexs" method="GET" ACTION="" onChange="submit()" class="form-inline">
+	ElasticSearch indexs : 
+	<select name="es_index" id="es_index" class="form-control input-sm">
+	<option>---</option>
+	</select>
+	<input type="hidden" id="es_server_index" name="es_server_index">
+    </form>
+</td></tr></table>
+</div>
+</nav>
+
 <div id="metadata" class="panel panel-default">
   <div class="panel-heading">
     <h3 class="panel-title">Metadata</h3>
   </div>
   <div class="panel-body">
-	<form id="es_indexs" method="GET" ACTION="" onChange="submit()">
-	ElasticSearch indexs : 
-	<select name="es_index" id="es_index" class="form-control input-sm">
-	<option>---</option>
-	</select>
-	</form>
 	<ul id="es_fields" class="connectedSortable"></ul>
   </div>
 </div>
@@ -248,13 +288,13 @@ function refresh_query(){
 
 <div id="search" class="panel panel-default">
 <div class="form-inline" role="form">
-<span class="glyphicon glyphicon-search"></span>
+<i class="glyphicon glyphicon-search"></i>
 <input id="search_term1" name="search_term1" type="text" class="form-control input-sm" />
 <select name="search_operator2" id="search_operator2" class="form-control input-sm">
 	<option value="AND">AND</option>
 	<option value="OR">OR</option>
 </select>
-<span class="glyphicon glyphicon-search" class="form-control input-sm"></span>
+<i class="glyphicon glyphicon-search"></i>
 <input id="search_term2" name="search_term2" type="text" class="form-control input-sm" />
 </div>
 </div>
