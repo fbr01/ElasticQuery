@@ -2,10 +2,12 @@
 <html>
 <head>
 <title>ElasticQuery</title>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
-<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+<script src="//raw.github.com/nicolaskruchten/pivottable/master/examples/pivot.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
 <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+<link rel="stylesheet" href="//raw.github.com/nicolaskruchten/pivottable/master/examples/pivot.css">
 <style>
 body{font-family:arial;font-size: 9pt;}
 #header{display:inline;height:3em;}
@@ -187,6 +189,9 @@ $(document).ready(function() {
 	//UI tabs
 	$("#result").tabs();
 
+	//Pivot init
+	$("#pivot").pivotUI($('#worksheet'));
+
 	$("#es_server").val(elasticsearch_url);
 	$("#es_server_index").val(elasticsearch_url);
 
@@ -265,6 +270,7 @@ function refresh_query(){
 					}
 				});
 				$('#worksheet').append('</tr>');
+				$("#pivot").pivotUI($('#worksheet'),null,true);
 		            }
 		        } else {
 				alert('no result');
@@ -342,21 +348,25 @@ function refresh_query(){
 <div id="result">
  <ul>
 	<li><a href="#tabs-1">Table</a></li>
-	<li><a href="#tabs-2">CSV Export</a></li>
-	<li><a href="#tabs-3">Graphs</a></li>
-	<li><a href="#tabs-4">Info</a></li>
+	<li><a href="#tabs-2">Pivot table</a></li>
+	<li><a href="#tabs-3">CSV Export</a></li>
+	<li><a href="#tabs-4">Graphs</a></li>
+	<li><a href="#tabs-5">Info</a></li>
 </ul>
 <div id="tabs-1">
 	<table id="worksheet" class="table table-bordered"></table>
 </div>
 <div id="tabs-2">
+	<div id="pivot"></div>
+</div>
+<div id="tabs-3">
 	CSV export :
 	<textarea id="csv"></textarea>
 </div>
-<div id="tabs-3">
+<div id="tabs-4">
 Graphs
 </div>
-<div id="tabs-4">
+<div id="tabs-5">
 Info
 </div>
 </div>
