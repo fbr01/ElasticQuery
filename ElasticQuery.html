@@ -43,7 +43,7 @@ body{font-family:arial;font-size: 9pt;}
 
 
 #result {position: absolute;top: 12em;left: 12em;width:60em;height:35em;}
-#tabs-1 {height:30em;overflow:auto;}
+#tab-worksheet {height:30em;overflow:auto;}
 
 #es_fields {
 list-style-type: none;
@@ -243,6 +243,7 @@ function refresh_query(){
 	});
 	$('#worksheet').empty();
 	$('#worksheet_count').empty();
+	$('#info').empty();
 	$('#csv').empty();
 
 	es_limit = $('#es_limit').val();
@@ -299,6 +300,7 @@ function refresh_query(){
 				$('#worksheet').append('</tr>');
 		            }
 			    $('#worksheet_count').append(data_response.length + ' lines in result');
+			    $('#info').append('<table class="table condensed-table"><tr><td>Response time of last query</td><td>'+response.took+'ms</td></tr><tr><td>Result lines of last query</td><td>'+data_response.length+'</td></table>');
 			    if (mod_pivot){
 				$("#pivot").pivotUI($('#worksheet'),{aggregators: {"count": aggregators.count}},true);
 			    }
@@ -375,31 +377,30 @@ function refresh_query(){
 </div>
 </div>
 
-
 <div id="result">
  <ul>
-	<li><a href="#tabs-1">Table</a></li>
-	<li><a href="#tabs-2">Pivot table</a></li>
-	<li><a href="#tabs-3">CSV Export</a></li>
-	<li><a href="#tabs-4">Graphs</a></li>
-	<li><a href="#tabs-5">Info</a></li>
+	<li><a href="#tab-worksheet">Table</a></li>
+	<li><a href="#tab-pivot">Pivot table</a></li>
+	<li><a href="#tab-graph">Graphs</a></li>
+	<li><a href="#tab-csv">CSV Export</a></li>
+	<li><a href="#tab-info">Info</a></li>
 </ul>
-<div id="tabs-1">
+<div id="tab-worksheet">
 	<div id="worksheet_count"></div>
 	<table id="worksheet" class="table table-bordered"></table>
 </div>
-<div id="tabs-2">
+<div id="tab-pivot">
 	<div id="pivot"></div>
 </div>
-<div id="tabs-3">
-	CSV export :
+<div id="tab-graph">
+	Graphs
+</div>
+<div id="tab-csv">
 	<textarea id="csv"></textarea>
 </div>
-<div id="tabs-4">
-Graphs
-</div>
-<div id="tabs-5">
-Info
+<div id="tab-info">
+	<div id="info"></div>
+<p>ElasticQuery is an Open Source software (<a href="https://raw.github.com/fbr01/ElasticQuery/master/LICENSE" target="_blank">license</a>). More info on <a href="https://github.com/fbr01/ElasticQuery" target="_blank">project page.</a></p>
 </div>
 </div>
 </body>
