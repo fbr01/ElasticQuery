@@ -73,17 +73,23 @@ height:4em;
 #worksheet {
 font-family:arial;
 background-color: #DDDDDD;
-margin:10px 1pt 15px;
+margin:4px 1pt 4px;
 font-size: 9pt;
 text-align: left;
-max-height: 330px;
 overflow:auto;
 }
 
-#worksheet th, #worksheet th {
-background-color: #DDDDDD;
+#worksheet_count {
+font-family:arial;
+color: #AAAAAA;
+margin:2px 1pt 6px;
+font-size: 9pt;
+text-align: right;
+}
+
+#worksheet th{
 font-size: 10pt;
-padding: 4px;
+padding: 3px;
 text-align:center;
 }
 
@@ -95,7 +101,29 @@ background-color: #EFEFEF;
 background-color: #FFFFFF;
 }
 
+#worksheet tr td {
+padding:3px;
+}
 
+.table tbody tr th, .table tbody tr td {
+padding:0.5px;
+margin :0px;
+line-height : 0.8em;
+font-size: 9pt;
+vertical-align :middle;
+}
+
+td.pvtVal, td.rowTotal, td.colTotal, td.pvtGrandTotal, th.pvtTotalLabel, th.pvtColLabel{
+text-align:center;
+}
+
+th.pvtAxisLabel{
+font-style:italic;
+}
+
+#worksheet th, td.rowTotal, td.colTotal, td.pvtGrandTotal, th.pvtTotalLabel{
+background-color: #EFEFEF;
+}
 
 #csvbutton{
 position: absolute;
@@ -126,6 +154,7 @@ $.urlParam = function(name){
 */
 var default_server = 'http://'+window.location.hostname+':9200';
 var date_format = 'dd/mm/yy';
+var mod_pivot = true;
 /*
 * *******************
 */
@@ -144,6 +173,8 @@ var available_es_fields = [];
 var selected_es_fields = [];
 var es_limit;
 var es_query;
+
+var aggregators;
 
 //Populate indexs/DB selection
 $.ajax({
@@ -190,7 +221,10 @@ $(document).ready(function() {
 	$("#result").tabs();
 
 	//Pivot init
-	$("#pivot").pivotUI($('#worksheet'));
+	if (mod_pivot){
+		aggregators = $.pivotUtilities.aggregators;
+		$("#pivot").pivotUI($('#worksheet'), {aggregators: {"count": aggregators.count}});
+	}
 
 	$("#es_server").val(elasticsearch_url);
 	$("#es_server_index").val(elasticsearch_url);
@@ -216,6 +250,7 @@ function refresh_query(){
 		selected_es_fields[$( this ).text()] = 'ok';
 	});
 	$('#worksheet').empty();
+	$('#worksheet_count').empty();
 	$('#csv').empty();
 
 	es_limit = $('#es_limit').val();
@@ -270,9 +305,13 @@ function refresh_query(){
 					}
 				});
 				$('#worksheet').append('</tr>');
-				$("#pivot").pivotUI($('#worksheet'),null,true);
 		            }
-		        } else {
+			    $('#worksheet_count').append(data_response.length + ' lines in result');
+			    if (mod_pivot){
+				$("#pivot").pivotUI($('#worksheet'),{aggregators: {"count": aggregators.count}},true);
+			    }
+		        }
+			else {
 				alert('no result');
 		        }
 		    }
@@ -354,6 +393,7 @@ function refresh_query(){
 	<li><a href="#tabs-5">Info</a></li>
 </ul>
 <div id="tabs-1">
+	<div id="worksheet_count"></div>
 	<table id="worksheet" class="table table-bordered"></table>
 </div>
 <div id="tabs-2">
