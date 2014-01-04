@@ -244,14 +244,14 @@ function refresh_query(){
 		            for (var i = 0; i < data_response.length; i++) {
 				data[i] = data_response[i]._source;
 				if (i==0){
-					$('#worksheet').append('<thead><tr>');
+					var header = '<thead><tr>';
 					$.each(data_response[i]._source, function(field,value) {
 						if(selected_es_fields[field] != undefined){
-							$("#worksheet").append('<th>'+field+'</th>');
+							header=header+'<th>'+field+'</th>';
 							$('#csv').append(field+';');
 						}
 					});
-					$('#worksheet').append('</tr></thead>');
+					$('#worksheet').append(header+'</tr></thead>');
 				}
 				$('#worksheet').append('<tr id="_id'+data_response[i]._id+'">');
 				$('#csv').append('\n');
