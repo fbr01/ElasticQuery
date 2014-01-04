@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
 <title>ElasticQuery</title>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
@@ -321,13 +322,13 @@ function refresh_query(){
 
 <div class="form-inline" role="form">
 <table><tr><td>
-    <form class="form-inline" role="form" id="es_servers" method="GET" ACTION="">
+    <form class="form-inline" role="form" id="es_servers" method="GET">
 	<i class="glyphicon glyphicon-tasks"></i>
         <input id="es_server" name="es_server" type="text" class="form-control input-sm" placeholder="Server">
       	<button type="submit" class="btn btn-default input-sm" onclick="submit()">Connect</button>
     </form>
 </td><td>
-    <form id="es_indexs" method="GET" ACTION="" onChange="submit()" class="form-inline">
+    <form id="es_indexs" method="GET" onChange="submit()" class="form-inline">
 	<label for="es_index">Index :</label>
 	<select name="es_index" id="es_index" class="form-control input-sm">
 	<option>---</option>
