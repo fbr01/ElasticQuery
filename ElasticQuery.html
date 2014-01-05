@@ -105,7 +105,7 @@ font-size: 9pt;
 vertical-align :middle;
 }
 
-td.pvtVal, td.rowTotal, td.colTotal, td.pvtGrandTotal, th.pvtTotalLabel, th.pvtColLabel{
+table.pvtTable tr td.rowTotal, table.pvtTable tr td.colTotal, table.pvtTable tr td.pvtGrandTotal, table.pvtTable tr th.pvtTotalLabel, table.pvtTable tr th.pvtColLabel{
 text-align:center;
 }
 
@@ -113,7 +113,7 @@ th.pvtAxisLabel{
 font-style:italic;
 }
 
-#worksheet th, td.rowTotal, td.colTotal, td.pvtGrandTotal, th.pvtTotalLabel{
+#worksheet th, table.pvtTable tr td.rowTotal, table.pvtTable tr td.colTotal, table.pvtTable tr td.pvtGrandTotal, table.pvtTable tr th.pvtTotalLabel{
 background-color: #EFEFEF;
 }
 
@@ -215,7 +215,9 @@ $(document).ready(function() {
 	//Pivot init
 	if (mod_pivot){
 		aggregators = $.pivotUtilities.aggregators;
-		$("#pivot").pivotUI($('#worksheet'), {aggregators: {"count": aggregators.count}});
+		$("#pivot").pivotUI($('#worksheet'));
+		$( ".pvtRenderer").addClass("form-control input-sm");
+		$( ".pvtAggregator").addClass("form-control input-sm");
 	}
 
 	$("#es_server").val(elasticsearch_url);
@@ -302,7 +304,9 @@ function refresh_query(){
 			    $('#worksheet_count').append(data_response.length + ' lines in result');
 			    $('#info').append('<table class="table condensed-table"><tr><td>Response time of last query</td><td>'+response.took+'ms</td></tr><tr><td>Result lines of last query</td><td>'+data_response.length+'</td></table>');
 			    if (mod_pivot){
-				$("#pivot").pivotUI($('#worksheet'),{aggregators: {"count": aggregators.count}},true);
+				$("#pivot").pivotUI($('#worksheet'),null,true);
+				$( ".pvtRenderer").addClass("form-control input-sm");
+				$( ".pvtAggregator").addClass("form-control input-sm");
 			    }
 		        }
 			else {
@@ -343,8 +347,7 @@ function refresh_query(){
 	<option>10</option>
 	<option>100</option>
 	<option>1000</option>
-	<option>100000</option>
-	<option>1000000</option>
+	<option>10000</option>
 	</select>
 </td></tr></table>
 </div>
