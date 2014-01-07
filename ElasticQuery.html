@@ -240,6 +240,8 @@ function connect_server(){
 //Refresh DB Query
 function refresh_query(){
 	selected_es_fields = [];
+	var worksheethtml = '';
+	var csvcontent = '';
 	$('#view_fields li').each(function(i){
 		selected_es_fields[$( this ).text()] = 'ok';
 	});
@@ -288,18 +290,19 @@ function refresh_query(){
 					});
 					$('#worksheet').append(header+'</tr></thead>');
 				}
-				$('#worksheet').append('<tr id="_id'+data_response[i]._id+'">');
-				$('#csv').append('\n');
+				worksheethtml= '<tr id="_id'+data_response[i]._id+'">';				
+				csvcontent = '\n';
 				$.each(data_response[i]._source, function(field,value) {
 					if(selected_es_fields[field] != undefined){
 						if (field.indexOf("date") !=-1){
 							value = $.datepicker.formatDate(date_format, new Date(value));
 						}
-						$("#_id"+data_response[i]._id).append('<td>'+value+'</td>');
-						$('#csv').append(value+';');
+						worksheethtml = worksheethtml.concat('<td>'+value+'</td>');						
+						csvcontent = csvcontent.concat(value+';');						
 					}
 				});
-				$('#worksheet').append('</tr>');
+				$('#worksheet').append(worksheethtml.concat('</tr>'));
+				$('#csv').append(csvcontent);
 		            }
 			    $('#worksheet_count').append(data_response.length + ' lines in result');
 			    $('#info').append('<table class="table condensed-table"><tr><td>Response time of last query</td><td>'+response.took+'ms</td></tr><tr><td>Result lines of last query</td><td>'+data_response.length+'</td></table>');
@@ -315,10 +318,7 @@ function refresh_query(){
 		    }
         });
 }
-
 </script>
-
-
 </head>
 <body>
 <nav id="header" class="navbar-inner-sm navbar-default navbar-fixed-top" role="navigation">
