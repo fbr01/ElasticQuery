@@ -129,7 +129,9 @@ height: 330px;
 }
 </style>
 <script>
-//Utility fonctions
+/*
+* Utility functions *****
+*/
 $.urlParam = function(name){
     var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
     if (results==null){
@@ -139,7 +141,6 @@ $.urlParam = function(name){
        return decodeURIComponent(results[1]) || 0;
     }
 }
-
 
 /*
 * Configuration *****
@@ -151,14 +152,9 @@ var mod_pivot = true;
 * *******************
 */
 
-var elasticsearch_url = $.urlParam('es_server');
-if (elasticsearch_url == undefined){
-	elasticsearch_url = $.urlParam('es_server_index');
-}
-if (elasticsearch_url == undefined){
-	elasticsearch_url = default_server;
-}
-
+/*
+* Global variables *****
+*/
 var data = [];
 var selected_es_index = $.urlParam('es_index');
 var available_es_fields = [];
@@ -168,73 +164,134 @@ var es_query;
 
 var aggregators;
 
-//Populate indexs/DB selection
-$.ajax({
-  url: elasticsearch_url+'/_aliases?pretty=1',
-  dataType: 'jsonp',
-    success: function( json ) {
-	var data = json;
-        $.each(data, function(field) {
-            $('#es_index').append($('<option>').text(field).attr('value', field));
-        });
-	if (selected_es_index != undefined){
-		$("#es_index").val(selected_es_index);
-	}
-    }
-});
-
-//Populate selected index/DB available fields
-if (selected_es_index != undefined){
-	$.ajax({
-	  url: elasticsearch_url+'/'+selected_es_index+'/_mapping?pretty=1',
-	  dataType: 'jsonp',
-	    success: function( json ) {
-		$(jQuery.parseJSON(JSON.stringify(json))).each(function() {  //Index
-			$.each(this, function(index) { //Index
-				$.each(this, function(doctype) { //Doctype
-					$.each(this, function(properties) { //properties
-						$.each(this, function(rootTag) { //rootTag
-							if(available_es_fields[rootTag] == undefined){
-								available_es_fields[rootTag] = 'ok';
-								$("#es_fields").append($('<li class="ui-state-default">').text(rootTag).attr('value', rootTag));
-							}
-						});
-					});
-				});
-			});
-		});
-
-	    }
-	});
+var db_type = $.urlParam('db_type');
+if (db_type == undefined){
+	db_type = $.urlParam('es_dbtype_index');
+}
+var dataserver_url = $.urlParam('es_server');
+if (dataserver_url == undefined){
+	dataserver_url = $.urlParam('es_server_index');
+}
+if (dataserver_url == undefined){
+	dataserver_url = default_server;
 }
 
-$(document).ready(function() {
-	//UI tabs
-	$("#result").tabs();
-
-	//Pivot init
-	if (mod_pivot){
-		aggregators = $.pivotUtilities.aggregators;
-		$("#pivot").pivotUI($('#worksheet'));
-		$( ".pvtRenderer").addClass("form-control input-sm");
-		$( ".pvtAggregator").addClass("form-control input-sm");
-	}
-
-	$("#es_server").val(elasticsearch_url);
-	$("#es_server_index").val(elasticsearch_url);
-
-	//Metadatas - Interaction beetwen available db fields and view fields
-	$( "#es_fields, #view_fields" ).sortable({
-		connectWith: ".connectedSortable",
-		stop:function(event,ui){
-			refresh_query();
-		}
-	}).disableSelection();
-});
+/*
+* Data Management functions *****
+*/
 
 //Connect to a server
 function connect_server(){
-	elasticsearch_url = $('#es_server').text();
+	dataserver_url = $('#es_server').text();
+}
+
+
+//Populate indexs/DB selections
+function populate_datasources(){
+	if (db_type == 'ElasticSearch'){
+		$.ajax({
+		  url: dataserver_url+'/_aliases?pretty=1',
+		  dataType: 'jsonp',
+		    success: function( json ) {
+			var data = json;
+			$.each(data, function(field) {
+			    $('#es_index').append($('<option>').text(field).attr('value', field));
+			});
+		    }
+		});
+	}
+	else if(db_type == 'MongoDB'){
+	   $.ajax({
+	      url: dataserver_url+'/listDatabases',
+	      type: 'get',
+	      dataType: 'jsonp',
+	      jsonp: 'jsonp',
+	      success: function (response) {
+		var data_response = $(jQuery.parseJSON(JSON.stringify(response)));
+		if (data_response.length > 0) {
+		    for (var i = 0; i < data_response.length; i++) {
+			$.each(data_response[i].databases, function(database) {
+				$.each(this, function(fielddb,valuedb) {
+					if (fielddb == 'name'){
+						$('#es_index').append('<optgroup id="'+valuedb+'" label="'+valuedb+'"></optgroup>');
+						   $.ajax({
+						      url: dataserver_url+'/'+valuedb+'/system.namespaces/',
+						      type: 'get',
+						      dataType: 'jsonp',
+						      jsonp: 'jsonp',
+						      success: function (response) {
+							var data_response = $(jQuery.parseJSON(JSON.stringify(response)));
+
+							if (data_response.length > 0) {
+							    for (var i = 0; i < data_response.length; i++) {
+								$.each(data_response[i].rows, function(collection) {
+									$.each(this, function(fieldcol,valuecol) {
+										if (fieldcol == 'name'){
+											$('#'+valuecol.split(".")[0]).append($('<option>').text(valuecol).attr('value', valuecol));
+										}
+									});
+								});
+							    }
+							}
+						      },
+						      error: function (XMLHttpRequest, textStatus, errorThrown) {
+							alert('error', errorThrown);
+						      }
+						    });
+					}
+				});
+			});
+		    }
+		}
+	      },
+	      error: function (XMLHttpRequest, textStatus, errorThrown) {
+		alert('error', errorThrown);
+	      }
+	    });
+	}
+	if (selected_es_index != undefined){
+		$("#es_index").val(selected_es_index);
+	}
+}
+
+//Refresh metadata of selected index/DB available fields
+function refresh_metadata(){
+	if (selected_es_index != undefined){
+		if (db_type == 'ElasticSearch'){
+			$.ajax({
+			  url: dataserver_url+'/'+selected_es_index+'/_mapping?pretty=1',
+			  dataType: 'jsonp',
+			    success: function( json ) {
+				$(jQuery.parseJSON(JSON.stringify(json))).each(function() {  //Index
+					$.each(this, function(index) { //Index
+						$.each(this, function(doctype) { //Doctype
+							$.each(this, function(properties) { //properties
+								$.each(this, function(rootTag) { //rootTag
+									if(available_es_fields[rootTag] == undefined){
+										available_es_fields.push(rootTag);
+									}
+								});
+							});
+						});
+					});
+					populate_metadata();
+				});
+			    }
+			});
+		}
+		else if(db_type == 'MongoDB'){
+			available_es_fields.push('_id');
+			populate_metadata();
+		}
+	}
+
+}
+
+//Populate selectable metadatas in UI
+function populate_metadata(){
+	for (var i = 0; i < available_es_fields.length; i++) {
+		$("#es_fields").append($('<li class="ui-state-default">').text(available_es_fields[i]).attr('value', available_es_fields[i]));
+	}
 }
 
 //Refresh DB Query
@@ -264,7 +321,7 @@ function refresh_query(){
 
 	//Execute query & populate
 	$.ajax({
-		    url: elasticsearch_url+'/'+selected_es_index+'/_search',
+		    url: dataserver_url+'/'+selected_es_index+'/_search',
 		    type: 'GET',
 		    dataType: 'json',
 		    data: {
@@ -314,6 +371,43 @@ function refresh_query(){
 		    }
         });
 }
+
+
+$(document).ready(function() {
+	//UI tabs
+	$("#result").tabs();
+
+	//Pivot init
+	if (mod_pivot){
+		aggregators = $.pivotUtilities.aggregators;
+		$("#pivot").pivotUI($('#worksheet'));
+		$( ".pvtRenderer").addClass("form-control input-sm");
+		$( ".pvtAggregator").addClass("form-control input-sm");
+	}
+
+
+	if (db_type != undefined){
+		$("#db_type").val(db_type);
+	}
+	$("#es_server").val(dataserver_url);
+	$("#es_server_index").val(dataserver_url);
+	$("#es_dbtype_index").val(db_type);
+
+	//Metadatas - Interaction beetwen available db fields and view fields
+	$( "#es_fields, #view_fields" ).sortable({
+		connectWith: ".connectedSortable",
+		stop:function(event,ui){
+			refresh_query();
+		}
+	}).disableSelection();
+
+	//Datasources
+	populate_datasources();
+	//Metadata
+	refresh_metadata();
+	populate_metadata();
+
+});
 </script>
 </head>
 <body>
@@ -325,6 +419,10 @@ function refresh_query(){
 <div class="form-inline" role="form">
 <table><tr><td>
     <form class="form-inline" role="form" id="es_servers" method="GET">
+	<select name="db_type" id="db_type" class="form-control input-sm">
+	<option>ElasticSearch</option>
+	<option>MongoDB</option>
+	</select>
 	<i class="glyphicon glyphicon-tasks"></i>
         <input id="es_server" name="es_server" type="text" class="form-control input-sm" placeholder="Server">
       	<button type="submit" class="btn btn-default input-sm" onclick="submit()">Connect</button>
@@ -336,6 +434,7 @@ function refresh_query(){
 	<option>---</option>
 	</select>
 	<input type="hidden" id="es_server_index" name="es_server_index">
+	<input type="hidden" id="es_dbtype_index" name="es_dbtype_index">
     </form>
 </td><td>
 	<label for="es_limit">Query limit :</label>
