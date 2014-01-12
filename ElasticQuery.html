@@ -256,6 +256,7 @@ function populate_datasources(){
 
 //Refresh metadata of selected index/DB available fields
 function refresh_metadata(){
+	available_es_fields = [];
 	if (selected_es_index != undefined){
 		if (db_type == 'ElasticSearch'){
 			$.ajax({
@@ -274,17 +275,15 @@ function refresh_metadata(){
 							});
 						});
 					});
-					populate_metadata();
+				populate_metadata();
 				});
 			    }
 			});
 		}
 		else if(db_type == 'MongoDB'){
 			available_es_fields.push('_id');
-			populate_metadata();
 		}
 	}
-
 }
 
 //Populate selectable metadatas in UI
@@ -320,31 +319,53 @@ function refresh_query(){
 	}
 
 	//Execute query & populate
-	$.ajax({
-		    url: dataserver_url+'/'+selected_es_index+'/_search',
-		    type: 'GET',
-		    dataType: 'json',
-		    data: {
-		        q: es_query,
-		        pretty: true,
-			from : 0,
-			size : es_limit,
-		    },
-		    success: function(response) {
-		        var data_response = response.hits.hits;
+	if (db_type == 'ElasticSearch'){
+		$.ajax({
+			    url: dataserver_url+'/'+selected_es_index+'/_search',
+			    type: 'GET',
+			    dataType: 'json',
+			    data: {
+				q: es_query,
+				pretty: true,
+				from : 0,
+				size : es_limit,
+			    },
+			    success: function(response) {
+				var data_response = response.hits.hits;
 
-		        if (data_response.length > 0) {
-		            for (var i = 0; i < data_response.length; i++) {
-				data[i] = data_response[i]._source;
-		            }
-			    $('#info').append('<table class="table condensed-table"><tr><td>Response time of last query</td><td>'+response.took+'ms</td></tr><tr><td>Result lines of last query</td><td>'+data_response.length+'</td></table>');
-			populate_queryresult();
-		        }
-			else {
-				alert('no result');
-		        }
-		    }
-        });
+				if (data_response.length > 0) {
+				    for (var i = 0; i < data_response.length; i++) {
+					data[i] = data_response[i]._source;
+				    }
+				    $('#info').append('<table class="table condensed-table"><tr><td>Response time of last query</td><td>'+response.took+'ms</td></tr><tr><td>Result lines of last query</td><td>'+data_response.length+'</td></table>');
+				populate_queryresult();
+				}
+				else {
+					alert('no result');
+				}
+			    }
+		});
+	}
+	else if(db_type == 'MongoDB'){
+		$.ajax({
+			    url: dataserver_url+'/'+selected_es_index.replace(".","/")+'/',
+			    type: 'GET',
+			    dataType: 'jsonp',
+			    jsonp: 'jsonp',
+			    data: {
+				limit : es_limit,
+			    },
+			    success: function(response) {
+				var data_response = $(jQuery.parseJSON(JSON.stringify(response.rows)));
+				if (data_response.length > 0) {
+					$.each(data_response, function(obj,row) {//for each line of result
+						data.push(row);
+					});
+				}
+				populate_queryresult();
+			    }
+		});
+	}
 }
 
 //Populate query result in UI
