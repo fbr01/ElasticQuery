@@ -193,8 +193,7 @@ function populate_datasources(){
 		  url: dataserver_url+'/_aliases?pretty=1',
 		  dataType: 'jsonp',
 		    success: function( json ) {
-			var data = json;
-			$.each(data, function(field) {
+			$.each(json, function(field) {
 			    $('#es_index').append($('<option>').text(field).attr('value', field));
 			});
 		    }
@@ -249,6 +248,20 @@ function populate_datasources(){
 	      }
 	    });
 	}
+	else if(db_type == 'CouchDB'){
+		$.ajax({
+		  url: dataserver_url+'/_all_dbs',
+   		  type: 'get',
+   		  dataType: 'jsonp',
+		    success: function( json ) {
+			$.each(json, function(numbase,base) {
+			    $('#es_index').append($('<option>').text(base).attr('value', base));
+			});
+		    },
+		    error: function(XMLHttpRequest, textStatus,errorThrown){alert("Error"); }
+		});
+
+	}
 	if (selected_es_index != undefined){
 		$("#es_index").val(selected_es_index);
 	}
@@ -281,8 +294,6 @@ function refresh_metadata(){
 			});
 		}
 		else if(db_type == 'MongoDB'){
-
-
 			$.ajax({
 				    url: dataserver_url+'/'+selected_es_index.replace(".","/")+'/',
 				    type: 'GET',
@@ -300,19 +311,48 @@ function refresh_metadata(){
 										available_es_fields.push(field);
 									}
 							});
-						});
-						console.log(available_es_fields);					
+						});					
 					}
 					populate_metadata();
 				    }
 			});
-
-
-
-
-
-
-//			available_es_fields.push('_id');
+		}
+		else if(db_type == 'CouchDB'){
+			$.ajax({
+				    url: dataserver_url+'/'+selected_es_index+'/_all_docs',
+				    type: 'GET',
+				    dataType: 'jsonp',
+				    data: {
+					limit : 1,
+				    },
+				    success: function(response) {
+					var data_response = $(jQuery.parseJSON(JSON.stringify(response.rows)));
+					if (data_response.length > 0) {
+						$.each(data_response, function(obj,row) {//for each line of result
+							$.each(row, function(field,value) {//for each field
+								if(field == 'id'){
+									$.ajax({
+										    url: dataserver_url+'/'+selected_es_index+'/'+value+'/',
+										    type: 'GET',
+										    dataType: 'jsonp',
+										    data: {
+											limit : 1,
+										    },
+										    success: function(response) {
+											$.each(response, function(fieldcol,valuecol) {
+												if(available_es_fields[fieldcol] == undefined){
+													available_es_fields.push(fieldcol);
+												}
+											});
+											populate_metadata();
+										    }
+									});
+								}
+							});
+						});
+					}
+				    }
+			});
 		}
 	}
 }
@@ -481,6 +521,7 @@ $(document).ready(function() {
 	<select name="db_type" id="db_type" class="form-control input-sm">
 	<option>ElasticSearch</option>
 	<option>MongoDB</option>
+	<option>CouchDB</option>
 	</select>
 	<i class="glyphicon glyphicon-tasks"></i>
         <input id="es_server" name="es_server" type="text" class="form-control input-sm" placeholder="Server">
