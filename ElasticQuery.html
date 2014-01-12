@@ -275,13 +275,44 @@ function refresh_metadata(){
 							});
 						});
 					});
-				populate_metadata();
+					populate_metadata();
 				});
 			    }
 			});
 		}
 		else if(db_type == 'MongoDB'){
-			available_es_fields.push('_id');
+
+
+			$.ajax({
+				    url: dataserver_url+'/'+selected_es_index.replace(".","/")+'/',
+				    type: 'GET',
+				    dataType: 'jsonp',
+				    jsonp: 'jsonp',
+				    data: {
+					limit : 1,
+				    },
+				    success: function(response) {
+					var data_response = $(jQuery.parseJSON(JSON.stringify(response.rows)));
+					if (data_response.length > 0) {
+						$.each(data_response, function(obj,row) {//for each line of result
+							$.each(row, function(field,value) {//for each field
+									if(available_es_fields[field] == undefined){
+										available_es_fields.push(field);
+									}
+							});
+						});
+						console.log(available_es_fields);					
+					}
+					populate_metadata();
+				    }
+			});
+
+
+
+
+
+
+//			available_es_fields.push('_id');
 		}
 	}
 }
@@ -296,14 +327,11 @@ function populate_metadata(){
 //Refresh DB Query
 function refresh_query(){
 	selected_es_fields = [];
-
+	data = [];
 	$('#view_fields li').each(function(i){
 		selected_es_fields[$( this ).text()] = 'ok';
 	});
-	$('#worksheet').empty();
-	$('#worksheet_count').empty();
 	$('#info').empty();
-	$('#csv').empty();
 
 	es_limit = $('#es_limit').val();
 	if ($('#search_term1').val() != ''){
@@ -370,6 +398,10 @@ function refresh_query(){
 
 //Populate query result in UI
 function populate_queryresult(){
+	$('#worksheet').empty();
+	$('#worksheet_count').empty();
+	$('#csv').empty();
+
     	$('#worksheet_count').append(data.length + ' lines in result');
 	for (var i = 0; i < data.length; i++) {
 		if (i==0){
