@@ -142,6 +142,11 @@ $.urlParam = function(name){
     }
 }
 
+function error_handler(error_message){
+	$( "#error_message" ).empty();
+	$( "#error_message" ).append(error_message);
+	$( "#error" ).dialog();
+}
 /*
 * Configuration *****
 */
@@ -190,13 +195,16 @@ function connect_server(){
 function populate_datasources(){
 	if (db_type == 'ElasticSearch'){
 		$.ajax({
-		  url: dataserver_url+'/_aliases?pretty=1',
-		  dataType: 'jsonp',
-		    success: function( json ) {
-			$.each(json, function(field) {
-			    $('#es_index').append($('<option>').text(field).attr('value', field));
-			});
-		    }
+			url: dataserver_url+'/_aliases?pretty=1',
+		  	dataType: 'jsonp',
+		    	success: function( json ) {
+				$.each(json, function(field) {
+			    		$('#es_index').append($('<option>').text(field).attr('value', field));
+				});
+		    	},
+			error: function (XMLHttpRequest, textStatus, errorThrown) {
+				error_handler(errorThrown);
+			}
 		});
 	}
 	else if(db_type == 'MongoDB'){
@@ -214,29 +222,28 @@ function populate_datasources(){
 					if (fielddb == 'name'){
 						$('#es_index').append('<optgroup id="'+valuedb+'" label="'+valuedb+'"></optgroup>');
 						   $.ajax({
-						      url: dataserver_url+'/'+valuedb+'/system.namespaces/',
-						      type: 'get',
-						      dataType: 'jsonp',
-						      jsonp: 'jsonp',
-						      success: function (response) {
-							var data_response = $(jQuery.parseJSON(JSON.stringify(response)));
-
-							if (data_response.length > 0) {
-							    for (var i = 0; i < data_response.length; i++) {
-								$.each(data_response[i].rows, function(collection) {
-									$.each(this, function(fieldcol,valuecol) {
-										if (fieldcol == 'name'){
-											$('#'+valuecol.split(".")[0]).append($('<option>').text(valuecol).attr('value', valuecol));
-										}
-									});
-								});
-							    }
-							}
-						      },
-						      error: function (XMLHttpRequest, textStatus, errorThrown) {
-							alert('error', errorThrown);
-						      }
-						    });
+						   	url: dataserver_url+'/'+valuedb+'/system.namespaces/',
+							type: 'get',
+						   	dataType: 'jsonp',
+						   	jsonp: 'jsonp',
+						   	success: function (response) {
+								var data_response = $(jQuery.parseJSON(JSON.stringify(response)));
+								if (data_response.length > 0) {
+									for (var i = 0; i < data_response.length; i++) {
+										$.each(data_response[i].rows, function(collection) {
+											$.each(this, function(fieldcol,valuecol) {
+												if (fieldcol == 'name'){
+													$('#'+valuecol.split(".")[0]).append($('<option>').text(valuecol).attr('value', valuecol));
+												}
+											});
+										});
+									}
+								}
+							},
+						      	error: function (XMLHttpRequest, textStatus, errorThrown) {
+								error_handler(errorThrown);
+						      	}
+						});
 					}
 				});
 			});
@@ -244,23 +251,24 @@ function populate_datasources(){
 		}
 	      },
 	      error: function (XMLHttpRequest, textStatus, errorThrown) {
-		alert('error', errorThrown);
+		error_handler(errorThrown);
 	      }
 	    });
 	}
 	else if(db_type == 'CouchDB'){
 		$.ajax({
-		  url: dataserver_url+'/_all_dbs',
-   		  type: 'get',
-   		  dataType: 'jsonp',
-		    success: function( json ) {
-			$.each(json, function(numbase,base) {
-			    $('#es_index').append($('<option>').text(base).attr('value', base));
-			});
-		    },
-		    error: function(XMLHttpRequest, textStatus,errorThrown){alert("Error"); }
+			url: dataserver_url+'/_all_dbs',
+   			type: 'get',
+   			dataType: 'jsonp',
+			success: function( json ) {
+				$.each(json, function(numbase,base) {
+					$('#es_index').append($('<option>').text(base).attr('value', base));
+				});
+		    	},
+		    	error: function(XMLHttpRequest, textStatus,errorThrown){
+				error_handler(errorThrown);
+			}
 		});
-
 	}
 	if (selected_es_index != undefined){
 		$("#es_index").val(selected_es_index);
@@ -273,36 +281,39 @@ function refresh_metadata(){
 	if (selected_es_index != undefined){
 		if (db_type == 'ElasticSearch'){
 			$.ajax({
-			  url: dataserver_url+'/'+selected_es_index+'/_mapping?pretty=1',
-			  dataType: 'jsonp',
-			    success: function( json ) {
-				$(jQuery.parseJSON(JSON.stringify(json))).each(function() {  //Index
-					$.each(this, function(index) { //Index
-						$.each(this, function(doctype) { //Doctype
-							$.each(this, function(properties) { //properties
-								$.each(this, function(rootTag) { //rootTag
-									if(available_es_fields[rootTag] == undefined){
-										available_es_fields.push(rootTag);
-									}
+				url: dataserver_url+'/'+selected_es_index+'/_mapping?pretty=1',
+			  	dataType: 'jsonp',
+			    	success: function( json ) {
+					$(jQuery.parseJSON(JSON.stringify(json))).each(function() {  //Index
+						$.each(this, function(index) { //Index
+							$.each(this, function(doctype) { //Doctype
+								$.each(this, function(properties) { //properties
+									$.each(this, function(rootTag) { //rootTag
+										if(available_es_fields[rootTag] == undefined){
+											available_es_fields.push(rootTag);
+										}
+									});
 								});
 							});
 						});
+						populate_metadata();
 					});
-					populate_metadata();
-				});
-			    }
+			    	},
+				error: function (XMLHttpRequest, textStatus, errorThrown) {
+					error_handler(errorThrown);
+				}
 			});
 		}
 		else if(db_type == 'MongoDB'){
 			$.ajax({
-				    url: dataserver_url+'/'+selected_es_index.replace(".","/")+'/',
-				    type: 'GET',
-				    dataType: 'jsonp',
-				    jsonp: 'jsonp',
-				    data: {
+				url: dataserver_url+'/'+selected_es_index.replace(".","/")+'/',
+				type: 'GET',
+				dataType: 'jsonp',
+				jsonp: 'jsonp',
+				data: {
 					limit : 1,
-				    },
-				    success: function(response) {
+				},
+				success: function(response) {
 					var data_response = $(jQuery.parseJSON(JSON.stringify(response.rows)));
 					if (data_response.length > 0) {
 						$.each(data_response, function(obj,row) {//for each line of result
@@ -314,44 +325,50 @@ function refresh_metadata(){
 						});					
 					}
 					populate_metadata();
-				    }
+				},
+				error: function (XMLHttpRequest, textStatus, errorThrown) {
+					error_handler(errorThrown);
+				}
 			});
 		}
 		else if(db_type == 'CouchDB'){
 			$.ajax({
-				    url: dataserver_url+'/'+selected_es_index+'/_all_docs',
-				    type: 'GET',
-				    dataType: 'jsonp',
-				    data: {
+				url: dataserver_url+'/'+selected_es_index+'/_all_docs',
+				type: 'GET',
+				dataType: 'jsonp',
+				data: {
 					limit : 1,
-				    },
-				    success: function(response) {
+				},
+				success: function(response) {
 					var data_response = $(jQuery.parseJSON(JSON.stringify(response.rows)));
 					if (data_response.length > 0) {
 						$.each(data_response, function(obj,row) {//for each line of result
 							$.each(row, function(field,value) {//for each field
 								if(field == 'id'){
 									$.ajax({
-										    url: dataserver_url+'/'+selected_es_index+'/'+value+'/',
-										    type: 'GET',
-										    dataType: 'jsonp',
-										    data: {
+										url: dataserver_url+'/'+selected_es_index+'/'+value+'/',
+										type: 'GET',
+										dataType: 'jsonp',
+										data: {
 											limit : 1,
-										    },
-										    success: function(response) {
+										},
+										success: function(response) {
 											$.each(response, function(fieldcol,valuecol) {
 												if(available_es_fields[fieldcol] == undefined){
 													available_es_fields.push(fieldcol);
 												}
 											});
 											populate_metadata();
-										    }
+										},
+										error: function (XMLHttpRequest, textStatus, errorThrown) {
+											error_handler(errorThrown);
+										}
 									});
 								}
 							});
 						});
 					}
-				    }
+				}
 			});
 		}
 	}
@@ -389,41 +406,43 @@ function refresh_query(){
 	//Execute query & populate
 	if (db_type == 'ElasticSearch'){
 		$.ajax({
-			    url: dataserver_url+'/'+selected_es_index+'/_search',
-			    type: 'GET',
-			    dataType: 'json',
-			    data: {
+			url: dataserver_url+'/'+selected_es_index+'/_search',
+			type: 'GET',
+			dataType: 'json',
+			data: {
 				q: es_query,
 				pretty: true,
 				from : 0,
 				size : es_limit,
-			    },
-			    success: function(response) {
+			},
+			success: function(response) {
 				var data_response = response.hits.hits;
-
 				if (data_response.length > 0) {
-				    for (var i = 0; i < data_response.length; i++) {
-					data[i] = data_response[i]._source;
-				    }
-				    $('#info').append('<table class="table condensed-table"><tr><td>Response time of last query</td><td>'+response.took+'ms</td></tr><tr><td>Result lines of last query</td><td>'+data_response.length+'</td></table>');
-				populate_queryresult();
+					for (var i = 0; i < data_response.length; i++) {
+						data[i] = data_response[i]._source;
+					}
+					$('#info').append('<table class="table condensed-table"><tr><td>Response time of last query</td><td>'+response.took+'ms</td></tr><tr><td>Result lines of last query</td><td>'+data_response.length+'</td></table>');
+					populate_queryresult();
 				}
 				else {
-					alert('no result');
+					error_handler('no result');
 				}
-			    }
+				},
+				error: function (XMLHttpRequest, textStatus, errorThrown) {
+					error_handler(errorThrown);
+				}
 		});
 	}
 	else if(db_type == 'MongoDB'){
 		$.ajax({
-			    url: dataserver_url+'/'+selected_es_index.replace(".","/")+'/',
-			    type: 'GET',
-			    dataType: 'jsonp',
-			    jsonp: 'jsonp',
-			    data: {
+			url: dataserver_url+'/'+selected_es_index.replace(".","/")+'/',
+			type: 'GET',
+			dataType: 'jsonp',
+			jsonp: 'jsonp',
+			data: {
 				limit : es_limit,
-			    },
-			    success: function(response) {
+			},
+			success: function(response) {
 				var data_response = $(jQuery.parseJSON(JSON.stringify(response.rows)));
 				if (data_response.length > 0) {
 					$.each(data_response, function(obj,row) {//for each line of result
@@ -431,7 +450,10 @@ function refresh_query(){
 					});
 				}
 				populate_queryresult();
-			    }
+			},
+			error: function (XMLHttpRequest, textStatus, errorThrown) {
+				error_handler(errorThrown);
+			}
 		});
 	}
 }
@@ -599,8 +621,12 @@ $(document).ready(function() {
 </div>
 <div id="tab-info">
 	<div id="info"></div>
-<p>ElasticQuery is an Open Source software (<a href="https://raw.github.com/fbr01/ElasticQuery/master/LICENSE" target="_blank">license</a>). More info on <a href="https://github.com/fbr01/ElasticQuery" target="_blank">project page.</a></p>
+	<p>ElasticQuery is an Open Source software (<a href="https://raw.github.com/fbr01/ElasticQuery/master/LICENSE" target="_blank">license</a>).
+	More info on <a href="https://github.com/fbr01/ElasticQuery" target="_blank">project page.</a></p>
 </div>
+</div>
+<div id="error" title="Error" class="alert alert-danger fade in">
+        <p id="error_message"></p>
 </div>
 </body>
 </html>
