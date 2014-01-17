@@ -249,6 +249,9 @@ function populate_datasources(){
 			});
 		    }
 		}
+		else {
+			error_handler('no database found');
+		}
 	      },
 	      error: function (XMLHttpRequest, textStatus, errorThrown) {
 		error_handler(errorThrown);
@@ -427,10 +430,10 @@ function refresh_query(){
 				else {
 					error_handler('no result');
 				}
-				},
-				error: function (XMLHttpRequest, textStatus, errorThrown) {
-					error_handler(errorThrown);
-				}
+			},
+			error: function (XMLHttpRequest, textStatus, errorThrown) {
+				error_handler(errorThrown);
+			}
 		});
 	}
 	else if(db_type == 'MongoDB'){
