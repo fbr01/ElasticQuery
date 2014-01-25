@@ -19,7 +19,7 @@ body{font-family:arial;font-size: 9pt;}
     padding-top: 0.2em;
     font-size: 1em;
     font-weight:normal;
-    margin-left:2em;
+    margin-left:1.5em;
 }
 #header i {
     position: absolute;
@@ -40,10 +40,6 @@ body{font-family:arial;font-size: 9pt;}
     padding: 20px 12px;
     pointer-events: none;
 }
-
-
-#result {position: absolute;top: 12em;left: 12em;width:60em;height:35em;}
-#tab-worksheet {height:30em;overflow:auto;}
 
 #es_fields {
 list-style-type: none;
@@ -69,14 +65,29 @@ margin:4px 1pt 4px;
 font-size: 9pt;
 text-align: left;
 overflow:auto;
+margin-top: 1em;
+margin-left: 13em;
+}
+
+#list{
+margin-top: 14em;
+width:60em;height:35em;
+}
+
+#pivottable{
+margin-top: 8em;
+margin-left:1em;
+margin-right:1em;
 }
 
 #worksheet_count {
 font-family:arial;
 color: #AAAAAA;
-margin:2px 1pt 6px;
+margin-top:2px;
 font-size: 9pt;
 text-align: right;
+margin-left: 13em;
+width:60em;
 }
 
 #worksheet th{
@@ -118,9 +129,7 @@ background-color: #EFEFEF;
 }
 
 #csvbutton{
-position: absolute;
-left: 50em;
-top : 0.25em;
+margin-left: 1.5em;
 }
 
 #csv{
@@ -130,8 +139,11 @@ height: 330px;
 </style>
 <script>
 /*
-* Utility functions *****
+* Utility var and functions *****
 */
+var info_base = '<p>ElasticQuery is an Open Source software (<a href="https://raw.github.com/fbr01/ElasticQuery/master/LICENSE" target="_blank">license</a>).More info on <a href="https://github.com/fbr01/ElasticQuery" target="_blank">project page.</a></p>';
+
+
 $.urlParam = function(name){
     var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
     if (results==null){
@@ -143,10 +155,16 @@ $.urlParam = function(name){
 }
 
 function error_handler(error_message){
-	$( "#error_message" ).empty();
-	$( "#error_message" ).append(error_message);
-	$( "#error" ).dialog();
+	$("#error_message").empty();
+	$("#error_message").append(error_message);
+	$("#error").dialog();
 }
+
+function info_handler(info_message){
+	$("#info").empty();
+	$("#info").append(info_message+info_base);
+}
+
 /*
 * Configuration *****
 */
@@ -166,6 +184,7 @@ var available_es_fields = [];
 var selected_es_fields = [];
 var es_limit;
 var es_query;
+
 
 var aggregators;
 
@@ -278,6 +297,18 @@ function populate_datasources(){
 	}
 }
 
+function select_querytype(){
+	if ($('#query_type').val() == 'List'){
+		$("#pivottable").hide();
+		$("#list").show();
+	}
+	else{
+		$("#list").hide();
+		$("#pivottable").show();
+	}
+	refresh_metadata();
+}
+
 //Refresh metadata of selected index/DB available fields
 function refresh_metadata(){
 	available_es_fields = [];
@@ -377,21 +408,33 @@ function refresh_metadata(){
 	}
 }
 
-//Populate selectable metadatas in UI
+//Populate metadatas (in UI for list)
 function populate_metadata(){
+	selected_es_fields = [];
+	console.log(available_es_fields);
+	$('#es_fields').empty();
 	for (var i = 0; i < available_es_fields.length; i++) {
-		$("#es_fields").append($('<li class="ui-state-default">').text(available_es_fields[i]).attr('value', available_es_fields[i]));
+		if ($('#query_type').val() == 'List'){
+			$("#es_fields").append($('<li class="ui-state-default">').text(available_es_fields[i]).attr('value', available_es_fields[i]));
+		}
+		else{
+			selected_es_fields[available_es_fields[i]] = 'ok';
+		}
+	}
+	if ($('#query_type').val() != 'List'){
+		refresh_query();
 	}
 }
 
 //Refresh DB Query
 function refresh_query(){
-	selected_es_fields = [];
 	data = [];
-	$('#view_fields li').each(function(i){
-		selected_es_fields[$( this ).text()] = 'ok';
-	});
-	$('#info').empty();
+	if ($('#query_type').val() == 'List'){
+		selected_es_fields = [];
+		$('#view_fields li').each(function(i){
+			selected_es_fields[$( this ).text()] = 'ok';
+		});
+	}
 
 	es_limit = $('#es_limit').val();
 	if ($('#search_term1').val() != ''){
@@ -424,7 +467,7 @@ function refresh_query(){
 					for (var i = 0; i < data_response.length; i++) {
 						data[i] = data_response[i]._source;
 					}
-					$('#info').append('<table class="table condensed-table"><tr><td>Response time of last query</td><td>'+response.took+'ms</td></tr><tr><td>Result lines of last query</td><td>'+data_response.length+'</td></table>');
+					info_handler('<table class="table condensed-table"><tr><td>Response time of last query</td><td>'+response.took+'ms</td></tr><tr><td>Result lines of last query</td><td>'+data_response.length+'</td></table>');
 					populate_queryresult();
 				}
 				else {
@@ -498,8 +541,6 @@ function populate_queryresult(){
 }
 
 $(document).ready(function() {
-	//UI tabs
-	$("#result").tabs();
 
 	//Pivot init
 	if (mod_pivot){
@@ -527,109 +568,102 @@ $(document).ready(function() {
 
 	//Datasources
 	populate_datasources();
-	//Metadata
-	refresh_metadata();
-	populate_metadata();
+	//Query type and metadata
+	select_querytype();
+	//refresh_metadata();
+	//populate_metadata();
 
 });
 </script>
 </head>
 <body>
 <nav id="header" class="navbar-inner-sm navbar-default navbar-fixed-top" role="navigation">
-  <div class="navbar-header">
-    <a class="navbar-brand" href="#">ElasticQuery</a>
-  </div>
+	<div class="navbar-header">
+		<a class="navbar-brand" href="#">ElasticQuery</a>
+	</div>
 
-<div class="form-inline" role="form">
-<table><tr><td>
-    <form class="form-inline" role="form" id="es_servers" method="GET">
-	<select name="db_type" id="db_type" class="form-control input-sm">
-	<option>ElasticSearch</option>
-	<option>MongoDB</option>
-	<option>CouchDB</option>
-	</select>
-	<i class="glyphicon glyphicon-tasks"></i>
-        <input id="es_server" name="es_server" type="text" class="form-control input-sm" placeholder="Server">
-      	<button type="submit" class="btn btn-default input-sm" onclick="submit()">Connect</button>
-    </form>
-</td><td>
-    <form id="es_indexs" method="GET" onChange="submit()" class="form-inline">
-	<label for="es_index">Index :</label>
-	<select name="es_index" id="es_index" class="form-control input-sm">
-	<option>---</option>
-	</select>
-	<input type="hidden" id="es_server_index" name="es_server_index">
-	<input type="hidden" id="es_dbtype_index" name="es_dbtype_index">
-    </form>
-</td><td>
-	<label for="es_limit">Query limit :</label>
-	<select name="es_limit" id="es_limit" class="form-control input-sm" style="margin-top:0em;">
-	<option>10</option>
-	<option>100</option>
-	<option>1000</option>
-	<option>10000</option>
-	<option>100000</option>
-	</select>
-</td></tr></table>
-</div>
+	<div class="form-inline" role="form">
+		<table><tr><td>
+		    <form class="form-inline" role="form" id="es_servers" method="GET">
+			<select name="db_type" id="db_type" class="form-control input-sm">
+			<option>ElasticSearch</option>
+			<option>MongoDB</option>
+			<option>CouchDB</option>
+			</select>
+			<i class="glyphicon glyphicon-tasks"></i>
+			<input id="es_server" name="es_server" type="text" class="form-control input-sm" placeholder="Server">
+		      	<button type="submit" class="btn btn-default input-sm" onclick="submit()">Connect</button>
+		    </form>
+		</td><td>
+		    <form id="es_indexs" method="GET" onChange="submit()" class="form-inline">
+			<label for="es_index">DB :</label>
+			<select name="es_index" id="es_index" class="form-control input-sm">
+			<option>---</option>
+			</select>
+			<input type="hidden" id="es_server_index" name="es_server_index">
+			<input type="hidden" id="es_dbtype_index" name="es_dbtype_index">
+		    </form>
+		</td>
+		<td>
+			<label for="query_type">Query type :</label>
+			<select name="query_type" id="query_type" class="form-control input-sm" style="margin-top:0em;" onchange="select_querytype();">
+			<option>List</option>
+			<option>Pivot table</option>
+			</select>
+
+		</td>
+		<td>
+			<label for="es_limit">Query limit :</label>
+			<select name="es_limit" id="es_limit" class="form-control input-sm" style="margin-top:0em;">
+			<option>10</option>
+			<option>100</option>
+			<option>1000</option>
+			<option>10000</option>
+			<option>100000</option>
+			</select>
+		</td>
+		<td>
+				<button id="csvbutton" name="CSV" value="CSV" onclick="window.open('data:text/csv,' + $('#csv').val());" class="btn btn-success">CSV</button>
+				<button id="infobutton" name="CSV" value="CSV" onclick="$('#info').dialog();" class="btn btn-success">Info</button>
+
+		</td></tr></table>
+	</div>
 </nav>
 
-<div id="metadata" class="panel panel-default">
-  <div class="panel-heading">
-    <h3 class="panel-title">Metadata</h3>
-  </div>
-  <div class="panel-body">
-	<ul id="es_fields" class="connectedSortable"></ul>
-  </div>
-</div>
+<div id="list">
+	<div id="metadata" class="panel panel-default">
+		<div class="panel-heading">
+	    		<h3 class="panel-title">Metadata</h3>
+		</div>
+		<div class="panel-body">
+			<ul id="es_fields" class="connectedSortable"></ul>
+		</div>
+	</div>
 
-<div id="view" class="panel panel-default">
-	<ul id="view_fields" class="connectedSortable"></ul>
-	<button id="csvbutton" name="CSV" value="CSV" onclick="window.open('data:text/csv,' + $('#csv').val());" class="btn btn-success">CSV</button>
-</div>
+	<div id="view" class="panel panel-default">
+		<ul id="view_fields" class="connectedSortable"></ul>
+	</div>
 
-<div id="search" class="panel panel-default">
-<div class="form-inline" role="form">
-<i class="glyphicon glyphicon-search"></i>
-<input id="search_term1" name="search_term1" type="text" class="form-control input-sm" onchange="refresh_query();" />
-<select name="search_operator2" id="search_operator2" class="form-control input-sm" onchange="refresh_query();">
-	<option value="AND">AND</option>
-	<option value="OR">OR</option>
-</select>
-<i class="glyphicon glyphicon-search"></i>
-<input id="search_term2" name="search_term2" type="text" class="form-control input-sm" onchange="refresh_query();"/>
-</div>
-</div>
+	<div id="search" class="panel panel-default">
+		<div class="form-inline" role="form">
+			<i class="glyphicon glyphicon-search"></i>
+			<input id="search_term1" name="search_term1" type="text" class="form-control input-sm" onchange="refresh_query();" />
+			<select name="search_operator2" id="search_operator2" class="form-control input-sm" onchange="refresh_query();">
+				<option value="AND">AND</option>
+				<option value="OR">OR</option>
+			</select>
+			<i class="glyphicon glyphicon-search"></i>
+			<input id="search_term2" name="search_term2" type="text" class="form-control input-sm" onchange="refresh_query();"/>
+		</div>
+	</div>
 
-<div id="result">
- <ul>
-	<li><a href="#tab-worksheet">Table</a></li>
-	<li><a href="#tab-pivot">Pivot table</a></li>
-	<li><a href="#tab-graph">Graphs</a></li>
-	<li><a href="#tab-csv">CSV Export</a></li>
-	<li><a href="#tab-info">Info</a></li>
-</ul>
-<div id="tab-worksheet">
 	<div id="worksheet_count"></div>
 	<table id="worksheet" class="table table-bordered"></table>
 </div>
-<div id="tab-pivot">
-	<div id="pivot"></div>
-</div>
-<div id="tab-graph">
-	Graphs
-</div>
-<div id="tab-csv">
-	<textarea id="csv"></textarea>
-</div>
-<div id="tab-info">
-	<div id="info"></div>
-	<p>ElasticQuery is an Open Source software (<a href="https://raw.github.com/fbr01/ElasticQuery/master/LICENSE" target="_blank">license</a>).
-	More info on <a href="https://github.com/fbr01/ElasticQuery" target="_blank">project page.</a></p>
-</div>
-</div>
-<div id="error" title="Error" class="alert alert-danger fade in">
-        <p id="error_message"></p>
-</div>
+
+<div id="pivottable"><div id="pivot"></div></div>
+
+<div id="info" title="Info" style="display: none;"></div>
+<div id="error" title="Error" style="display: none;"><p id="error_message"></p></div>
 </body>
 </html>
