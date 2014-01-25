@@ -124,6 +124,13 @@ th.pvtAxisLabel{
 font-style:italic;
 }
 
+.label-info{
+	background:transparent;
+	color : rgb(85, 85, 85);
+	font-family : arial;
+	font-size : 10.8px;
+}
+
 #worksheet th, table.pvtTable tr td.rowTotal, table.pvtTable tr td.colTotal, table.pvtTable tr td.pvtGrandTotal, table.pvtTable tr th.pvtTotalLabel{
 background-color: #EFEFEF;
 }
@@ -568,11 +575,9 @@ $(document).ready(function() {
 
 	//Datasources
 	populate_datasources();
+
 	//Query type and metadata
 	select_querytype();
-	//refresh_metadata();
-	//populate_metadata();
-
 });
 </script>
 </head>
